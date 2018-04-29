@@ -1,0 +1,64 @@
+% count absolute number of spikes
+ClusterSize=sum(AutoCorrelograms,2);
+
+% calculate Percentage of spikes in Refractory Period
+PerRefra=(sum(AutoCorrelograms(:,RefraWindow),2)./sum(AutoCorrelograms,2))*100;
+
+% Set Parameter Threshold to Exclude Bad Clusters
+AbsoluteRefractoryPeriodSpikes=5;
+PercentRefractoryPierodSpikes=0.1;
+MinNumberOfTotalSpikes=2000;
+
+%find those clusters
+IdxEx=find(AbsRefra<AbsoluteRefractoryPeriodSpikes... 
+            &PerRefra<PercentRefractoryPierodSpikes...
+            &ClusterSize<MinNumberOfTotalSpikes);
+
+%Create a Vector length all Cells filled with 0 and 1 when Cluster needs to be excluded        
+Exclude=ones(1,size(FRmeans,2));
+Exclude(IdxEx)=1;
+
+% plot all cells, uncomment idx to what you want to look at
+
+%all cells
+idx=1:size(FRmeans,2);    
+% all excluded
+% idx=find(Excluded==1);
+% all included
+% idx=find(Excluded==0);
+% all with less than 3000 Spikes
+% idx=find(ClusterSize<3000); % ... you get the idea
+
+
+figure()
+for i=1:size(idx,2)
+    
+    plot(AutoCorrelograms(idx(i),:))
+    hold on
+    y=301:382;
+    plot(y,(wfs(idx(i),:)*max(AutoCorrelograms(idx(i),:),[],2))+max(AutoCorrelograms(idx(i),:),[],2))
+    text(200,max(AutoCorrelograms(idx(i),:),[],2),['PercentRefra ', (num2str(PerRefra(idx(i))))])
+    text(200,max(AutoCorrelograms(idx(i),:),[],2)/2,['AbsRefra ', (num2str(AbsRefra(idx(i))))])
+    text(200,max(AutoCorrelograms(idx(i),:),[],2)/3,['FRmean ', (num2str(FRmeans(idx(i))))])
+    text(200,max(AutoCorrelograms(idx(i),:),[],2)/4,['Exclude ', (num2str(Exclude(idx(i))))])
+    text(200,max(AutoCorrelograms(idx(i),:),[],2)/5,['NeuronType ', (num2str(neuronType(idx(i))))])
+    text(200,max(AutoCorrelograms(idx(i),:),[],2)/2.5,['ClusterSize ', (num2str(ClusterSize(idx(i))))])
+    pause
+    clf
+    
+end
+
+
+%% Maybe interessting as well, 3d plot with our waveform parameters Spike Width and valey to peak as well as firing Rate
+% colorcoded are Excluded ones in red and potential interneurons in green
+figure()
+scatter3(spikeWidth(includeWF==1),SpikeV2P(includeWF==1),FRmeans(includeWF==1))
+hold on
+scatter3(spikeWidth(includeWF==1&Exclude==1),SpikeV2P(includeWF==1&Exclude==1),FRmeans(includeWF==1&Exclude==1),'*r')
+hold on
+scatter3(spikeWidth(includeWF==1&neuronType==1),SpikeV2P(includeWF==1&neuronType==1),FRmeans(includeWF==1&neuronType==1),'*g')
+hold on
+xlabel('SpikeWidth')
+ylabel('spikeV2P')
+zlabel('Firing Rate')
+
